@@ -461,17 +461,12 @@ def validate_entity(
     dup_addrs = ent_addr.intersection(loc_addr)
     if len(dup_addrs) > 0:
         for addr in dup_addrs:
-            modbus_create_issue(
-                hass,
-                "duplicate_entity_entry",
-                [
-                    f"{hub_name}/{name}",
-                    addr,
-                    "",
-                ],
-                f"Modbus {hub_name}/{name} address {addr} is duplicate, second entry not loaded!",
+            _LOGGER.warning(
+                "Modbus %s/%s address %s is duplicate",
+                hub_name,
+                name,
+                addr,
             )
-        return False
     if name in ent_names:
         modbus_create_issue(
             hass,
