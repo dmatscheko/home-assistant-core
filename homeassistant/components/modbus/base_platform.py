@@ -223,15 +223,16 @@ class BaseStructPlatform(BasePlatform, RestoreEntity):
             val = self._min_value
         if self._max_value is not None and val > self._max_value:
             val = self._max_value
+        strval = str(val)
         if self._zero_suppress is not None and abs(val) <= self._zero_suppress:
-            val = 0
+            strval = "0"
         elif self._precision == 0:
-            val = round(val)
+            strval = str(round(val))
         else:
-            val = round(val, self._precision)
+            strval = f"{float(val):.{self._precision}f}"
         if self._map is not None:
-            return self._map.get(str(val), str(val))
-        return str(val)
+            return self._map.get(strval, strval)
+        return strval
 
     def unpack_structure_result(self, registers: list[int]) -> str | None:
         """Convert registers to proper result."""
