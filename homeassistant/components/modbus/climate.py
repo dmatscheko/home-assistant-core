@@ -82,8 +82,6 @@ from .const import (
     CONF_SWING_MODE_SWING_VERT,
     CONF_SWING_MODE_VALUES,
     CONF_TARGET_TEMP,
-    CONF_TARGET_TEMP_OFFSET,
-    CONF_TARGET_TEMP_SCALE,
     CONF_TARGET_TEMP_WRITE_REGISTERS,
     CONF_WRITE_REGISTERS,
     DataType,
@@ -146,10 +144,6 @@ class ModbusThermostat(BaseStructPlatform, RestoreEntity, ClimateEntity):
         self._target_temperature_write_registers = config[
             CONF_TARGET_TEMP_WRITE_REGISTERS
         ]
-        # Use specific scale if provided, otherwise common scale
-        self._target_temp_scale = config.get(CONF_TARGET_TEMP_SCALE, self._scale)
-        # Use specific offset if provided, otherwise common offset
-        self._target_temp_offset = config.get(CONF_TARGET_TEMP_OFFSET, self._offset)
         self._unit = config[CONF_TEMPERATURE_UNIT]
         self._attr_current_temperature = None
         self._attr_target_temperature = None
@@ -416,19 +410,13 @@ class ModbusThermostat(BaseStructPlatform, RestoreEntity, ClimateEntity):
         # remark "now" is a dummy parameter to avoid problems with
         # async_track_time_interval
 
-        target_temp_raw = await self._async_read_register(
+        self._attr_target_temperature = await self._async_read_register(
             CALL_TYPE_REGISTER_HOLDING,
             self._target_temperature_register[
                 HVACMODE_TO_TARG_TEMP_REG_INDEX_ARRAY[self._attr_hvac_mode]
             ],
-            raw=True,
+            scale_offset_target=True,
         )
-        if target_temp_raw is not None:
-            self._attr_target_temperature = (
-                self._target_temp_scale * target_temp_raw + self._target_temp_offset
-            )
-        else:
-            self._attr_target_temperature = None
 
         self._attr_current_temperature = await self._async_read_register(
             self._input_type, self._address
@@ -496,7 +484,7 @@ class ModbusThermostat(BaseStructPlatform, RestoreEntity, ClimateEntity):
         self.async_write_ha_state()
 
     async def _async_read_register(
-        self, register_type: str, register: int, raw: bool | None = False
+        self, register_type: str, register: int, raw: bool | None = False, scale_offset_target: bool = False
     ) -> float | None:
         """Read register using the Modbus hub slave."""
         result = await self._hub.async_pb_call(
@@ -513,7 +501,7 @@ class ModbusThermostat(BaseStructPlatform, RestoreEntity, ClimateEntity):
             return int(result.registers[0])
 
         # The regular handling of the value
-        self._value = self.unpack_structure_result(result.registers)
+        self._value = self.unpack_structure_result(result.registers, scale_offset_target)
         if not self._value:
             self._attr_available = False
             return None
