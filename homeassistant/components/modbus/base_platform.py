@@ -215,7 +215,9 @@ class BaseStructPlatform(BasePlatform, RestoreEntity):
             registers.reverse()
         return registers
 
-    def __process_raw_value(self, entry: float | str | bytes, scale_offset_target: bool = False) -> str | None:
+    def __process_raw_value(
+        self, entry: float | str | bytes, scale_offset_target: bool = False
+    ) -> str | None:
         """Process value from sensor with NaN handling, scaling, offset, min/max etc."""
         if self._nan_value and entry in (self._nan_value, -self._nan_value):
             return None
@@ -241,10 +243,12 @@ class BaseStructPlatform(BasePlatform, RestoreEntity):
         else:
             strval = f"{float(val):.{self._precision}f}"
         if self._map is not None:
-            return self._map.get(strval, strval)
+            return str(self._map.get(strval, strval))
         return strval
 
-    def unpack_structure_result(self, registers: list[int], scale_offset_target: bool = False) -> str | None:
+    def unpack_structure_result(
+        self, registers: list[int], scale_offset_target: bool = False
+    ) -> str | None:
         """Convert registers to proper result."""
 
         if self._swap:

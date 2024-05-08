@@ -439,9 +439,11 @@ class ModbusThermostat(BaseStructPlatform, RestoreEntity, ClimateEntity):
         if self._fan_mode_register is not None:
             fan_mode = await self._async_read_register(
                 CALL_TYPE_REGISTER_HOLDING,
-                self._fan_mode_register
-                if isinstance(self._fan_mode_register, int)
-                else self._fan_mode_register[0],
+                (
+                    self._fan_mode_register
+                    if isinstance(self._fan_mode_register, int)
+                    else self._fan_mode_register[0]
+                ),
                 raw=True,
             )
 
@@ -455,9 +457,11 @@ class ModbusThermostat(BaseStructPlatform, RestoreEntity, ClimateEntity):
         if self._swing_mode_register:
             swing_mode = await self._async_read_register(
                 CALL_TYPE_REGISTER_HOLDING,
-                self._swing_mode_register
-                if isinstance(self._swing_mode_register, int)
-                else self._swing_mode_register[0],
+                (
+                    self._swing_mode_register
+                    if isinstance(self._swing_mode_register, int)
+                    else self._swing_mode_register[0]
+                ),
                 raw=True,
             )
 
@@ -484,7 +488,11 @@ class ModbusThermostat(BaseStructPlatform, RestoreEntity, ClimateEntity):
         self.async_write_ha_state()
 
     async def _async_read_register(
-        self, register_type: str, register: int, raw: bool | None = False, scale_offset_target: bool = False
+        self,
+        register_type: str,
+        register: int,
+        raw: bool | None = False,
+        scale_offset_target: bool = False,
     ) -> float | None:
         """Read register using the Modbus hub slave."""
         result = await self._hub.async_pb_call(
@@ -501,7 +509,9 @@ class ModbusThermostat(BaseStructPlatform, RestoreEntity, ClimateEntity):
             return int(result.registers[0])
 
         # The regular handling of the value
-        self._value = self.unpack_structure_result(result.registers, scale_offset_target)
+        self._value = self.unpack_structure_result(
+            result.registers, scale_offset_target
+        )
         if not self._value:
             self._attr_available = False
             return None
